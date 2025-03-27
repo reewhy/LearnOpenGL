@@ -6,6 +6,9 @@ float red = 0.3f;
 float green = 0.2f;
 float blue = 0.1f;
 
+float trRed = 0.0f;
+float trBlue = 0.0f;
+
 int mode = GL_FILL;
 
 // Callback for handling window resizing
@@ -36,9 +39,11 @@ void changeMode() {
 void process_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (action == GLFW_PRESS) {
 		if (key == GLFW_KEY_SPACE) glfwSetWindowShouldClose(window, true);
-		if (key == GLFW_KEY_0) colorChange('r');
-		if (key == GLFW_KEY_1) colorChange('g');
-		if (key == GLFW_KEY_2) colorChange('b');
+		if (key == GLFW_KEY_1) colorChange('r');
+		if (key == GLFW_KEY_2) colorChange('g');
+		if (key == GLFW_KEY_3) colorChange('b');
+		if (key == GLFW_KEY_4) trRed = fmod(trRed + 0.1f, 1.1f);
+		if (key == GLFW_KEY_5) trBlue = fmod(trBlue + 0.1f, 1.1f);
 		if (key == GLFW_KEY_ENTER) changeMode();
 
 		std::cout << "Red: " << red << " Blue: " << blue << " Green: " << green << std::endl;
@@ -48,15 +53,18 @@ void process_input_callback(GLFWwindow* window, int key, int scancode, int actio
 
 const char* vertexShaderSource = "#version 330 core\n"
 "layout (location = 0) in vec3 aPos;\n"
+"out vec4 vertexColor;\n"
 "void main()\n"
 "{\n"
 "   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"   vertexColor = vec4(0.5, 0.0, 0.0, 1.0);\n"
 "}\0";
 const char* fragmentShaderSource = "#version 330 core\n"
 "out vec4 FragColor;\n"
+"uniform vec4 ourColor;\n"
 "void main()\n"
 "{\n"
-"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"   FragColor = ourColor;\n"
 "}\n\0";
 
 
@@ -184,14 +192,24 @@ int main() {
 		glClearColor(red, green, blue, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		// Change green value overtime
+		float timeValue = glfwGetTime();
+		float greenValue = (sin(timeValue) / 2.0f) + 0.5f;
+		int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+
 		// Draw the object:
-		//	1. Activate program
+		//	Activate program
 		glUseProgram(shaderProgram);
-		//  2. Bind the VAO
+		//	Set uniform
+		glUniform4f(vertexColorLocation, trRed, greenValue, trBlue, 1.0f);
+
+		//  Bind the VAO
 		glBindVertexArray(VAO);
-		//  3. Vubd the EBO
+
+
+
 		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		//  4. DRAW THE FUCKING TRIANGLE(s)
+		//  DRAW THE FUCKING TRIANGLE(s)
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 		glBindVertexArray(0);
 

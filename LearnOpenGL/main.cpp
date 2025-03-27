@@ -6,6 +6,8 @@ float red = 0.3f;
 float green = 0.2f;
 float blue = 0.1f;
 
+int mode = GL_FILL;
+
 // Callback for handling window resizing
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
@@ -25,12 +27,19 @@ void colorChange(char c) {
 	if (green > 1.1f) green = 0.0f;
 }
 
+void changeMode() {
+	if (mode == GL_FILL) mode = GL_LINE;
+	else mode = GL_FILL;
+	glPolygonMode(GL_FRONT_AND_BACK, mode);
+}
+
 void process_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (action == GLFW_PRESS) {
 		if (key == GLFW_KEY_SPACE) glfwSetWindowShouldClose(window, true);
 		if (key == GLFW_KEY_0) colorChange('r');
 		if (key == GLFW_KEY_1) colorChange('g');
 		if (key == GLFW_KEY_2) colorChange('b');
+		if (key == GLFW_KEY_ENTER) changeMode();
 
 		std::cout << "Red: " << red << " Blue: " << blue << " Green: " << green << std::endl;
 	}
@@ -124,9 +133,16 @@ int main() {
 
 	// Vertex array
 	float vertices[] = {
-		-0.5f, -0.5f, 0.0f, // left  
-		 0.5f, -0.5f, 0.0f, // right 
-		 0.0f,  0.5f, 0.0f  // top   
+		0.5f, 0.5f, 0.0f, // top right
+		0.5f, -0.5f, 0.0f, // bottom right
+		-0.5f, -0.5f, 0.0f, // bottom left
+		-0.5f, 0.5f, 0.0f // top left
+	};
+
+	
+	unsigned int indices[] = {
+		0, 1, 3,
+		1, 2, 3
 	};
 
 
@@ -134,15 +150,22 @@ int main() {
 	unsigned int VAO;
 	// Buffer of object
 	unsigned int VBO;
+	// Element Buffer Objects
+	unsigned int EBO;
 	glGenVertexArrays(1, &VAO);
 	// Giving an ID to the buffer
 	glGenBuffers(1, &VBO);
+	// Giving an ID to the EBO
+	glGenBuffers(1, &EBO);
 	// Bind the vertex array
 	glBindVertexArray(VAO);
 	// Binding the buffe
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	// Copying the verteces in the buffer
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+	// Bind the EBO
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
 	// Telling OpenGL how to interpret vertex data
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
@@ -155,9 +178,6 @@ int main() {
 	// (with this function OpenGL knows that we want to display data and coordinates with respect to the window)
 	glViewport(0, 0, 800, 600);
 
-	
-	
-
 	// Render loop
 	while (!glfwWindowShouldClose(window)) {
 		// Rendering
@@ -169,8 +189,11 @@ int main() {
 		glUseProgram(shaderProgram);
 		//  2. Bind the VAO
 		glBindVertexArray(VAO);
-		//  3. DRAW THE FUCKING TRIANGLE
-		glDrawArrays(GL_TRIANGLES, 0, 3);
+		//  3. Vubd the EBO
+		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		//  4. DRAW THE FUCKING TRIANGLE(s)
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 
 		// Check and call  events and swap the buffers
 		glfwSwapBuffers(window);

@@ -20,9 +20,9 @@ void colorChange(char c) {
 		green = green + 0.1f;
 	}
 
-	if (red > 1.0f) red = 0.0f;
-	if (blue > 1.0f) blue = 0.0f;
-	if (green > 1.0f) green = 0.0f;
+	if (red > 1.1f) red = 0.0f;
+	if (blue > 1.1f) blue = 0.0f;
+	if (green > 1.1f) green = 0.0f;
 }
 
 void process_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
@@ -34,17 +34,32 @@ void process_input_callback(GLFWwindow* window, int key, int scancode, int actio
 
 		std::cout << "Red: " << red << " Blue: " << blue << " Green: " << green << std::endl;
 	}
-	
+
 }
 
+const char* vertexShaderSource = "#version 330 core\n"
+"layout (location = 0) in vec3 aPos;\n"
+"void main()\n"
+"{\n"
+"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+"}\0";
+const char* fragmentShaderSource = "#version 330 core\n"
+"out vec4 FragColor;\n"
+"void main()\n"
+"{\n"
+"   FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+"}\n\0";
 
 
 int main() {
+	int success;
+	char infoLog[512];
+
 	glfwInit();
 	// Window configuration options
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_COMPAT_PROFILE);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	
 	// Creating a window object
 	GLFWwindow* window = glfwCreateWindow(800, 600, "LearnOpenGL", NULL, NULL);
@@ -56,6 +71,10 @@ int main() {
 	}
 	// Making the window the main context of the current thread
 	glfwMakeContextCurrent(window);
+	// Setting window resize callback function
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	// Setting input handling
+	glfwSetKeyCallback(window, process_input_callback);
 	
 	// Initialize GLAD
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -63,14 +82,81 @@ int main() {
 		return -1;
 	}
 
+	// Creating a shader object
+	unsigned int vertexShader;
+	vertexShader = glCreateShader(GL_VERTEX_SHADER);
+	// Attach the shader source code to the object
+	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+	// Compile the shader
+	glCompileShader(vertexShader);
+	// Check success
+	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	if (!success) {
+		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+
+	// Linking and compiling fragment shader (this will give a color to our triangle)
+	unsigned int fragmentShader;
+	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+	glCompileShader(fragmentShader);
+
+	// Create a shader program
+	// (a shader program helps us combine multiple shaders)
+	unsigned int shaderProgram;
+	shaderProgram = glCreateProgram();
+	// Linking the shaders to the program
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
+
+	// Delete shader
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
+
+	// Check success
+	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
+	if (!success) {
+		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
+		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+	}
+
+	// Vertex array
+	float vertices[] = {
+		-0.5f, -0.5f, 0.0f, // left  
+		 0.5f, -0.5f, 0.0f, // right 
+		 0.0f,  0.5f, 0.0f  // top   
+	};
+
+
+	// Creating a VAO (Vertex Arrat Objects buffer)
+	unsigned int VAO;
+	// Buffer of object
+	unsigned int VBO;
+	glGenVertexArrays(1, &VAO);
+	// Giving an ID to the buffer
+	glGenBuffers(1, &VBO);
+	// Bind the vertex array
+	glBindVertexArray(VAO);
+	// Binding the buffe
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	// Copying the verteces in the buffer
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+	// Telling OpenGL how to interpret vertex data
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
+
 	// Setting size of the rendering window
 	// (with this function OpenGL knows that we want to display data and coordinates with respect to the window)
 	glViewport(0, 0, 800, 600);
 
-	// Setting window resize callback function
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	// Setting input handling
-	glfwSetKeyCallback(window, process_input_callback);
+	
+	
 
 	// Render loop
 	while (!glfwWindowShouldClose(window)) {
@@ -78,11 +164,22 @@ int main() {
 		glClearColor(red, green, blue, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT);
 
+		// Draw the object:
+		//	1. Activate program
+		glUseProgram(shaderProgram);
+		//  2. Bind the VAO
+		glBindVertexArray(VAO);
+		//  3. DRAW THE FUCKING TRIANGLE
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+
 		// Check and call  events and swap the buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 	// Clean GLFW's resources
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteProgram(shaderProgram);
 	glfwTerminate();
 	return 0;
 }

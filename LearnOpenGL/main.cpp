@@ -2,14 +2,42 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 
+float red = 0.3f;
+float green = 0.2f;
+float blue = 0.1f;
+
 // Callback for handling window resizing
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 
-// Close on "space" press
-void processInput(GLFWwindow* window) {
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) glfwSetWindowShouldClose(window, true);
-	if (glfwGetKey(window, GLFW_KEY_0) == GLFW_PRESS) std::cout << "Pressed" << std::endl;
+void colorChange(char c) {
+	if (c == 'r') {
+		red = red + 0.1f;
+	}
+	if (c == 'b') {
+		blue = blue + 0.1f;
+	}
+	if (c == 'g') {
+		green = green + 0.1f;
+	}
+
+	if (red > 1.0f) red = 0.0f;
+	if (blue > 1.0f) blue = 0.0f;
+	if (green > 1.0f) green = 0.0f;
 }
+
+void process_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+	if (action == GLFW_PRESS) {
+		if (key == GLFW_KEY_SPACE) glfwSetWindowShouldClose(window, true);
+		if (key == GLFW_KEY_0) colorChange('r');
+		if (key == GLFW_KEY_1) colorChange('g');
+		if (key == GLFW_KEY_2) colorChange('b');
+
+		std::cout << "Red: " << red << " Blue: " << blue << " Green: " << green << std::endl;
+	}
+	
+}
+
+
 
 int main() {
 	glfwInit();
@@ -41,13 +69,14 @@ int main() {
 
 	// Setting window resize callback function
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	// Setting input handling
+	glfwSetKeyCallback(window, process_input_callback);
 
 	// Render loop
 	while (!glfwWindowShouldClose(window)) {
-		// Input
-		processInput(window);
-
 		// Rendering
+		glClearColor(red, green, blue, 1.0f);
+		glClear(GL_COLOR_BUFFER_BIT);
 
 		// Check and call  events and swap the buffers
 		glfwSwapBuffers(window);

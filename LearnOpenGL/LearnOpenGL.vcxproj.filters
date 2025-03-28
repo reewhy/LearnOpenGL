@@ -26,5 +26,8 @@
     <None Include="sample.glsl">
       <Filter>File di origine</Filter>
     </None>
+    <None Include="main.dockerfile">
+      <Filter>File di origine</Filter>
+    </None>
   </ItemGroup>
 </Project>

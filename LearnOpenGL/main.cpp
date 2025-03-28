@@ -1,6 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
+#include "Shader.h"
 
 // Window size
 const unsigned int SCR_WIDTH = 800;
@@ -15,26 +16,6 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void changeMode();
 // Process user input
 void process_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-
-// Vertex shader source code
-const char* vertexShaderSource = "#version 330 core\n"
-								"layout (location = 0) in vec3 aPos;\n"
-								"layout (location = 1) in vec3 aColor;\n"
-								"out vec3 ourColor;\n"
-								"void main()\n"
-								"{\n"
-								"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-								"   ourColor = aColor;\n"
-								"}\0";
-// Fragment shader source code
-const char* fragmentShaderSource = "#version 330 core\n"
-								"out vec4 FragColor;\n"
-								"in vec3 ourColor;\n"
-								"void main()\n"
-								"{\n"
-								"   FragColor = vec4(ourColor, 1.0);\n"
-								"}\n\0";
-
 
 int main() {
 	// Initilize
@@ -65,49 +46,7 @@ int main() {
 		return -1;
 	}
 
-	
-
-	// Creating a shader object
-	unsigned int vertexShader;
-	vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	// Attach the shader source code to the object
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	// Compile the shader
-	glCompileShader(vertexShader);
-	int success;
-	char infoLog[512];
-	// Check success
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if (!success) {
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-
-	// Linking and compiling fragment shader (this will give a color to our triangle)
-	unsigned int fragmentShader;
-	fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-
-	// Create a shader program
-	// (a shader program helps us combine multiple shaders)
-	unsigned int shaderProgram;
-	shaderProgram = glCreateProgram();
-	// Linking the shaders to the program
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-
-	// Delete shader
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	// Check success
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
+	Shader ourShader("shader.vs", "shader.fs");
 
 	// Vertex array
 	float vertices[] = {
@@ -152,7 +91,8 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		//	Activate program
-		glUseProgram(shaderProgram);
+		ourShader.use();
+		glBindVertexArray(VAO);
 		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		//  DRAW THE FUCKING TRIANGLE(s)
 		glDrawArrays(GL_TRIANGLES, 0, 3);
@@ -163,7 +103,6 @@ int main() {
 	// Clean GLFW's resources
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
-	glDeleteProgram(shaderProgram);
 	glfwTerminate();
 	return 0;
 }

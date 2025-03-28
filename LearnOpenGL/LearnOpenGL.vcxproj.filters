@@ -13,12 +13,18 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="File di origine\learnopengl">
+      <UniqueIdentifier>{61bfceb9-d37a-4eae-9426-c428496fbfbf}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
     <ClCompile Include="..\..\..\..\..\..\builds\glad.c">
+      <Filter>File di origine</Filter>
+    </ClCompile>
+    <ClCompile Include="Shader.cpp">
       <Filter>File di origine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -29,5 +35,16 @@
     <None Include="main.dockerfile">
       <Filter>File di origine</Filter>
     </None>
+    <None Include="shader.vs">
+      <Filter>File di origine</Filter>
+    </None>
+    <None Include="shader.fs">
+      <Filter>File di origine</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Shader.h">
+      <Filter>File di origine\learnopengl</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

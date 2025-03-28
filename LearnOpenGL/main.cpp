@@ -7,6 +7,8 @@
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
+float offset = 0.0f;
+
 // Rendering mode
 int mode = GL_FILL;
 
@@ -91,6 +93,7 @@ int main() {
 		glClear(GL_COLOR_BUFFER_BIT);
 
 		//	Activate program
+		ourShader.setFloat("offset", offset);
 		ourShader.use();
 		glBindVertexArray(VAO);
 		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
@@ -121,6 +124,8 @@ void process_input_callback(GLFWwindow* window, int key, int scancode, int actio
 	if (action == GLFW_PRESS) {
 		if (key == GLFW_KEY_SPACE) glfwSetWindowShouldClose(window, true);
 		if (key == GLFW_KEY_ENTER) changeMode();
+		if (key == GLFW_KEY_A) offset = offset - 0.1f;
+		if (key == GLFW_KEY_D) offset = offset + 0.1f;
 	}
 
 }

@@ -19,7 +19,8 @@ add_library(glad "${PROJECT_SOURCE_DIR}/libs/glad/src/glad.c")
 target_include_directories(glad PUBLIC "${PROJECT_SOURCE_DIR}/libs/glad/include")
 
 # Add the executable
-add_executable(LearnOpenGL main.cpp Shader.cpp)
+add_executable(LearnOpenGL main.cpp Shader.cpp
+        Texture.h)
 
 # Link libraries
 target_link_libraries(LearnOpenGL PRIVATE glad OpenGL::GL glfw3)

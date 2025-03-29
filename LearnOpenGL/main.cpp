@@ -124,7 +124,12 @@ int main() {
 
 	ourShader.setFloat("mesh", 0.2f);
 
-
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	glm::mat4 view = glm::mat4(1.0f);
+	view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+	glm::mat4 projection;
+	projection = glm::perspective(glm::radians(45.0f), 800.f / 600.0f, 0.1f, 100.0f);
 	// Render loop
 	while (!glfwWindowShouldClose(window)) {
 		// Rendering
@@ -134,16 +139,15 @@ int main() {
 		texture1.use(GL_TEXTURE0);
 		texture2.use(GL_TEXTURE1);
 
-		glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-		transform = glm::translate(transform, glm::vec3(0.5f, -0.5f, 0.0f));
-		transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+		int modelLoc = glGetUniformLocation(ourShader.ID, "model");
+		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+		int viewLoc = glGetUniformLocation(ourShader.ID, "view");
+		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
+		int projectionLoc = glGetUniformLocation(ourShader.ID, "projection");
+		glUniformMatrix4fv(projectionLoc, 1, GL_FALSE, glm::value_ptr(projection));
 
 		//	Activate program
 		ourShader.use();
-
-
-		unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
-		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
 		glBindVertexArray(VAO);
 		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		//  DRAW THE FUCKING TRIANGLE(s)

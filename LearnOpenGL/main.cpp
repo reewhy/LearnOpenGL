@@ -5,8 +5,11 @@
 #include <filesystem>
 #define STB_IMAGE_IMPLEMENTATION
 #include "libs/stb_image.h"
-
 #include "Texture.h"
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 // Window size
 const unsigned int SCR_WIDTH = 800;
@@ -113,8 +116,10 @@ int main() {
 	Texture texture1("../textures/container.jpg", GL_NEAREST, GL_NEAREST_MIPMAP_NEAREST, true, GL_RGB);
 	Texture texture2("../textures/awesomeface.png", GL_NEAREST, GL_NEAREST_MIPMAP_NEAREST, true, GL_RGBA);
 
+
 	ourShader.use();
 	glUniform1i(glGetUniformLocation(ourShader.ID, "texture1"), 0);
+
     ourShader.setInt("texture2", 1);
 
 	ourShader.setFloat("mesh", 0.2f);
@@ -128,8 +133,17 @@ int main() {
 
 		texture1.use(GL_TEXTURE0);
 		texture2.use(GL_TEXTURE1);
+
+		glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+		transform = glm::translate(transform, glm::vec3(0.5f, -0.5f, 0.0f));
+		transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+
 		//	Activate program
 		ourShader.use();
+
+
+		unsigned int transformLoc = glGetUniformLocation(ourShader.ID, "transform");
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
 		glBindVertexArray(VAO);
 		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		//  DRAW THE FUCKING TRIANGLE(s)

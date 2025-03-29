@@ -1,0 +1,2 @@
+C:/Users/39353/CLionProjects/LearnOpenGL/LearnOpenGL/libs/glm/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/39353/CLionProjects/LearnOpenGL/LearnOpenGL/libs/glm/cmake-build-debug/CMakeFiles/rebuild_cache.dir

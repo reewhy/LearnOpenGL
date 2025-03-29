@@ -130,11 +130,24 @@ int main() {
 	glEnableVertexAttribArray(1);
 
 	// Create the textures object
-
 	Texture texture1("../textures/container.jpg", GL_NEAREST, GL_NEAREST_MIPMAP_NEAREST, true, GL_RGB);
 	Texture texture2("../textures/awesomeface.png", GL_NEAREST, GL_NEAREST_MIPMAP_NEAREST, true, GL_RGBA);
 
+	// Positions of cubes in the space
+	glm::vec3 cubePositions[] = {
+		glm::vec3( 0.0f,  0.0f,  0.0f),
+		glm::vec3( 2.0f,  5.0f, -15.0f),
+		glm::vec3(-1.5f, -2.2f, -2.5f),
+		glm::vec3(-3.8f, -2.0f, -12.3f),
+		glm::vec3( 2.4f, -0.4f, -3.5f),
+		glm::vec3(-1.7f,  3.0f, -7.5f),
+		glm::vec3( 1.3f, -2.0f, -2.5f),
+		glm::vec3( 1.5f,  2.0f, -2.5f),
+		glm::vec3( 1.5f,  0.2f, -1.5f),
+		glm::vec3(-1.3f,  1.0f, -1.5f)
+	};
 
+	// Use the shader
 	ourShader.use();
 	ourShader.setInt("texture1", 0);
     ourShader.setInt("texture2", 1);
@@ -146,31 +159,42 @@ int main() {
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+		// Use the texture
 		texture1.use(GL_TEXTURE0);
 		texture2.use(GL_TEXTURE1);
 
 		//	Activate program
 		ourShader.use();
-
-		glm::mat4 model = glm::mat4(1.0f);
+		// Create view matrix and projection matrix
 		glm::mat4 view = glm::mat4(1.0f);
 		glm::mat4 projection = glm::mat4(1.0f);
-		model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));
 		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
 		projection = glm::perspective(glm::radians(45.0f), 800.f / 600.0f, 0.1f, 100.0f);
 
-		unsigned int modelLoc = glGetUniformLocation(ourShader.ID, "model");
+		// Get view  location in the shader and change it
 		unsigned int viewLoc = glGetUniformLocation(ourShader.ID, "view");
-
-		glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE,&view[0][0]);
-
+		// Set the shader projection
 		ourShader.setMat4("projection", projection);
 
 		glBindVertexArray(VAO);
+		// Draw all the cubes
+		for(unsigned int i = 0; i < 10; i++)
+		{
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, cubePositions[i]);
+			float angle = 20.0f * i;
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			if ( i % 3 == 0 || i == 0) {
+				model = glm::rotate(model, (float)glfwGetTime() * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			}
+			ourShader.setMat4("model", model);
+
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+		glBindVertexArray(VAO);
 		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		//  DRAW THE FUCKING TRIANGLE(s)
-		glDrawArrays(GL_TRIANGLES, 0, 36);
 		// Check and call  events and swap the buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();

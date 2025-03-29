@@ -1,12 +1,18 @@
+// Helps make OpenGL compatible on more devices
 #include <glad/glad.h>
+// I forgor
 #include <GLFW/glfw3.h>
 #include <iostream>
+// Class for easy shader loading
 #include "Shader.h"
 #include <filesystem>
+// Class for image loading
 #define STB_IMAGE_IMPLEMENTATION
 #include "libs/stb_image.h"
+// Class for easy texture loading
 #include "Texture.h"
 
+// math library
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -15,7 +21,18 @@
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-float offset = 0.0f;
+// setting camera
+glm::vec3 cameraPos = glm::vec3(0.0f, 0.0f, 3.0f);
+glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3 cameraUp = glm::vec3(0.0f, 1.0f, 0.0f);
+float yaw = 0.0f;
+float pitch = 0.0f;
+float fov = 45.0f;
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+// cursor settings
+float lastX = 400, lastY = 300;
 
 // Rendering mode
 int mode = GL_FILL;
@@ -26,9 +43,11 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void changeMode();
 // Process user input
 void process_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void processInput(GLFWwindow* window);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 int main() {
-    std::cout << "Current working directory: " << std::filesystem::current_path() << std::endl;
 	// Initilize
 	glfwInit();
 	// Window configuration options
@@ -50,6 +69,10 @@ int main() {
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	// Setting input handling
 	glfwSetKeyCallback(window, process_input_callback);
+	// Enabling mouse capture
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, mouse_callback);
+	glfwSetScrollCallback(window, scroll_callback);
 
 	// Initialize GLAD
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
@@ -57,10 +80,10 @@ int main() {
 		return -1;
 	}
 
+	// Yes
 	glEnable(GL_DEPTH_TEST);
 
-	// TEST SHADER
-	// Shader ourShader("../vertexTest.vs", "../fragmentTest.fs");
+	// Load shaders
 	Shader ourShader("../shader.vs", "../shader.fs");
 	// Vertex array
 	float vertices[] = {
@@ -107,7 +130,7 @@ int main() {
 		-0.5f,  0.5f, -0.5f,  0.0f, 1.0f
 	};
 
-	// Creating a VAO (Vertex Arrat Objects buffer)
+	// Creating a VAO (Vertex Array Objects buffer)
 	unsigned int VAO;
 	// Buffer of object
 	unsigned int VBO;
@@ -155,6 +178,14 @@ int main() {
 
 	// Render loop
 	while (!glfwWindowShouldClose(window)) {
+		// Calculate deltaTime
+		float currentFrame = glfwGetTime();
+		deltaTime = currentFrame - lastFrame;
+		lastFrame = currentFrame;
+
+		// Process user movement input
+		processInput(window);
+
 		// Rendering
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -167,13 +198,12 @@ int main() {
 		ourShader.use();
 		// Create view matrix and projection matrix
 		glm::mat4 view = glm::mat4(1.0f);
+		view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
+		ourShader.setMat4("view", view);
 		glm::mat4 projection = glm::mat4(1.0f);
 		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-		projection = glm::perspective(glm::radians(45.0f), 800.f / 600.0f, 0.1f, 100.0f);
+		projection = glm::perspective(glm::radians(fov), 800.f / 600.0f, 0.1f, 100.0f);
 
-		// Get view  location in the shader and change it
-		unsigned int viewLoc = glGetUniformLocation(ourShader.ID, "view");
-		glUniformMatrix4fv(viewLoc, 1, GL_FALSE,&view[0][0]);
 		// Set the shader projection
 		ourShader.setMat4("projection", projection);
 
@@ -220,8 +250,52 @@ void process_input_callback(GLFWwindow* window, int key, int scancode, int actio
 	if (action == GLFW_PRESS) {
 		if (key == GLFW_KEY_SPACE) glfwSetWindowShouldClose(window, true);
 		if (key == GLFW_KEY_ENTER) changeMode();
-		if (key == GLFW_KEY_A) offset = offset - 0.1f;
-		if (key == GLFW_KEY_D) offset = offset + 0.1f;
 	}
 
 }
+
+void processInput(GLFWwindow *window)
+{
+	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		glfwSetWindowShouldClose(window, true);
+
+	float cameraSpeed = static_cast<float>(2.5 * deltaTime);
+	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+		cameraPos += cameraSpeed * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		cameraPos -= cameraSpeed * cameraFront;
+	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+}
+void mouse_callback(GLFWwindow *window, double xpos, double ypos) {
+	float xoffset = xpos - lastX;
+	float yoffset = lastY - ypos;
+	lastX = xpos;
+	lastY = ypos;
+
+	const float sensitivity = 0.1f;
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	yaw += xoffset;
+	pitch += yoffset;
+
+	if (pitch > 89.0f) pitch = 89.0f;
+	if (pitch < -89.0f) pitch = -89.0f;
+
+	glm::vec3 direction;
+	direction.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+	direction.y = sin(glm::radians(pitch));
+	direction.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+	cameraFront = glm::normalize(direction);
+}
+
+void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
+	fov -= (float)yoffset;
+	if (fov < 1.0f) fov = 1.0f;
+	if (fov > 45.0f) fov = 45.0f;
+}
+
+

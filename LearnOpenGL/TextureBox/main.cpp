@@ -52,24 +52,22 @@ float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
 
-// Light source
+// Background
+glm::vec4 backColor(0.1f, 0.1f, 0.1f, 1.0f);
+
+// Directional light
+glm::vec3 direction(-0.2f, -1.0f, -0.3f);
+glm::vec3 dirAmbient(0.05f, 0.05f, 0.05f);
+glm::vec3 dirDiffuse(0.4f, 0.4f, 0.4f);
+glm::vec3 dirSpecular(0.5f, 0.5f, 0.5f);
+// Point light
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-// Cube color
-glm::vec3 toyColor(1.0f, 0.5f, 0.31f);
-// Light color
-glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
-// Specularity strength
-glm::vec3 specStrength(0.5f, 0.5f, 0.5f);
-// Object shininess
+glm::vec3 pointSpec(0.5f, 0.5f, 0.5f);
+glm::vec3 pointAmbient(0.5f, 0.5f, 0.5f);
+glm::vec3 pointDiffuse(0.4f, 0.4f, 0.4f);
+glm::vec3 pointColor(1.0f, 1.0f, 1.0f);
+// Material
 int shiny = 32;
-// Ambient light strength
-glm::vec3 ambient(0.5f, 0.5f, 0.5f);
-// Diffuse
-glm::vec3 diffuse(0.4f, 0.4f, 0.4f);
-// Plain color or texture
-bool tex = false;
-// Light direction
-glm::vec3 lightDir(-0.2f, -1.0f, -0.3f);
 
 // Timing
 float deltaTime = 0.0f; // Time between current and last frame
@@ -212,7 +210,7 @@ int main() {
 		// Generate UI
 		gui(&wireframe);
 
-		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+		glClearColor(backColor.x, backColor.y, backColor.z, backColor.w);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//	Activate program
@@ -221,15 +219,16 @@ int main() {
 		lightingShader.setFloat("material.shininess", shiny);
 
 		// Directional light
-		lightingShader.setVec3("dirLight.direction", lightDir);
-		lightingShader.setVec3("dirLight.ambient", ambient);
-		lightingShader.setVec3("dirLight.diffuse", diffuse);
-		lightingShader.setVec3("dirLight.specular",specStrength);
+		lightingShader.setVec3("dirLight.direction", direction);
+		lightingShader.setVec3("dirLight.ambient", dirAmbient);
+		lightingShader.setVec3("dirLight.diffuse", dirDiffuse);
+		lightingShader.setVec3("dirLight.specular",dirSpecular);
 		// Point Light
 		lightingShader.setVec3("pointLights[0].position", lightPos);
-		lightingShader.setVec3("pointLights[0].ambient", ambient);
-		lightingShader.setVec3("pointLights[0].diffuse", diffuse);
-		lightingShader.setVec3("pointLights[0].specular", specStrength);
+		lightingShader.setVec3("pointLights[0].ambient", pointAmbient);
+		lightingShader.setVec3("pointLights[0].diffuse", pointDiffuse);
+		lightingShader.setVec3("pointLights[0].specular", pointDiffuse);
+		lightingShader.setVec3("pointLights[0].color", pointColor);
 		lightingShader.setFloat("pointLights[0].constant", 1.0f);
 		lightingShader.setFloat("pointLights[0].linear", 0.09f);
 		lightingShader.setFloat("pointLights[0].quadratic", 0.032f);
@@ -272,7 +271,7 @@ int main() {
 		model = glm::scale(model, glm::vec3(0.2f));
 
 		lightCubeShader.setMat4("model", model);
-		lightCubeShader.setVec3("lightColor", lightColor);
+		lightCubeShader.setVec3("lightColor", pointColor);
 
 		glBindVertexArray(lightCubeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -360,18 +359,29 @@ GLFWwindow* init() {
 
 // GUI Configs
 void gui(bool *wireframe){
+
 	ImGui::Begin("Settings");
 
 	if (ImGui::Checkbox("Wireframe mode", wireframe)) {
 		changeMode();
 	}
-	ImGui::ColorEdit3("Color", glm::value_ptr(toyColor));
-	ImGui::DragFloat3("Light Position", glm::value_ptr(lightPos), 0.1f);
-	ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));
-	ImGui::DragFloat3("Specularity", glm::value_ptr(specStrength), 0.01f, 0.0f, 1.0f);
-	ImGui::DragInt("Shininess", &shiny, 1, 1, 256);
-	ImGui::DragFloat3("Ambient", glm::value_ptr(ambient), 0.01f, 0.0f, 1.0f);
-	ImGui::DragFloat3("Light direction", glm::value_ptr(lightDir), 0.1f);
+	ImGui::ColorEdit4("Background color", glm::value_ptr((backColor)));
+
+	if (!ImGui::CollapsingHeader("Directional Light")) {
+		ImGui::Text("Directional light");
+		ImGui::DragFloat3("dDirection", glm::value_ptr(direction), 0.1f);
+		ImGui::DragFloat3("dAmbient", glm::value_ptr(dirAmbient), 0.01f, 0.0f, 1.0f);
+		ImGui::DragFloat3("dDiffuse", glm::value_ptr(dirDiffuse), 0.01f, 0.0f, 1.0f);
+		ImGui::DragFloat3("dSpecular", glm::value_ptr(dirSpecular), 0.01f, 0.0f, 1.0f);
+	}
+	if (!ImGui::CollapsingHeader("PointLight")) {
+		ImGui::Text("Point Light");
+		ImGui::DragFloat3("pPosition", glm::value_ptr(lightPos), 0.01f);
+		ImGui::DragFloat3("pAmbient", glm::value_ptr(pointAmbient), 0.1f, 0.0f, 1.0f);
+		ImGui::DragFloat3("pDiffuse", glm::value_ptr(pointDiffuse), 0.1f, 0.0f, 1.0f);
+		ImGui::DragFloat3("pSpecular", glm::value_ptr(pointSpec), 0.1f, 0.0f, 1.0f);
+		ImGui::ColorEdit3("pColor", glm::value_ptr(pointColor), ImGuiColorEditFlags_Float);
+	}
 
 	ImGui::End();
 }

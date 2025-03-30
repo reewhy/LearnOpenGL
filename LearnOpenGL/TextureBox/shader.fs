@@ -21,6 +21,8 @@ struct PointLight{
     float linear;
     float quadratic;
 
+    vec3 color;
+
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
@@ -84,8 +86,8 @@ vec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir){
     vec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoords));
     vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));
 
-    ambient *= attenuation;
-    diffuse *= attenuation;
+    ambient *= attenuation * light.color;
+    diffuse *= attenuation * light.color;
     specular *= attenuation;
 
     return (ambient + diffuse + specular);

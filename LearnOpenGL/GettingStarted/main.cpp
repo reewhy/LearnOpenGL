@@ -18,23 +18,29 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "../common/Camera.h"
-
+#include "imgui.h"
+#include "../libs/imgui/imgui_impl_glfw.h"
+#include "../libs/imgui/imgui_impl_opengl3.h"
 // Window size
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // Rendering mode
 int mode = GL_FILL;
+int camera_mode = GLFW_CURSOR_DISABLED;
 
 // Callback for handling window resizing
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 // Change rendering mode
 void changeMode();
+void changeCameraMode(GLFWwindow* window);
 // Process user input
 void process_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
+// Gui
+void gui(bool *wireframe);
 
 // Camera settings
 Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
@@ -47,12 +53,14 @@ float deltaTime = 0.0f; // Time between current and last frame
 float lastFrame = 0.0f;
 
 int main() {
+	bool wireframe = false;
 	// Initilize
 	glfwInit();
 	// Window configuration options
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
 
 	// Creating a window object
 	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
@@ -77,6 +85,18 @@ int main() {
 		std::cout << "Failed to initialize GLAD" << std::endl;
 		return -1;
 	}
+
+	// ImGui configuration
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+#ifdef __EMSCRIPTEN__
+	ImGui_ImplGlfw_InstallEmscriptenCallbacks(window, "#canvas");
+#endif
+	ImGui_ImplOpenGL3_Init("#version 330");
+
 
 	// Yes
 	glEnable(GL_DEPTH_TEST);
@@ -174,8 +194,12 @@ int main() {
     ourShader.setInt("texture2", 1);
 	ourShader.setFloat("mesh", 0.2f);
 
+	// Light color
+	glm::vec3 coral(1.0f, 0.5f, 0.31f);
+
 	// Render loop
 	while (!glfwWindowShouldClose(window)) {
+		glfwPollEvents();
 		// Calculate deltaTime
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
@@ -184,9 +208,18 @@ int main() {
 		// Process user movement input
 		processInput(window);
 
+		// Generate ImGui frames
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		gui(&wireframe);
+
+
 		// Rendering
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
 
 		// Use the texture
 		texture1.use(GL_TEXTURE0);
@@ -223,14 +256,37 @@ int main() {
 		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 		//  DRAW THE FUCKING TRIANGLE(s)
 		// Check and call  events and swap the buffers
+
+		// Create the UI elements
+		ImGui::Render();
+
+
+		// Render the data
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
 		glfwSwapBuffers(window);
-		glfwPollEvents();
+
+
+
 	}
 	// Clean GLFW's resources
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
+	ImGui_ImplGlfw_Shutdown();
+	ImGui_ImplOpenGL3_Shutdown();
+	ImGui::DestroyContext();
 	glfwTerminate();
 	return 0;
+}
+
+void gui(bool *wireframe){
+	ImGui::Begin("Settings");
+
+	if (ImGui::Checkbox("Wireframe mode", wireframe)) {
+		changeMode();
+	}
+
+	ImGui::End();
 }
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
@@ -246,7 +302,8 @@ void changeMode() {
 void process_input_callback(GLFWwindow* window, int key, int scancode, int action, int mods) {
 	if (action == GLFW_PRESS) {
 		if (key == GLFW_KEY_SPACE) glfwSetWindowShouldClose(window, true);
-		if (key == GLFW_KEY_ENTER) changeMode();
+		// if (key == GLFW_KEY_ENTER) changeMode();
+		if (key == GLFW_KEY_F) changeCameraMode(window);
 	}
 
 }
@@ -288,6 +345,18 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	camera.ProcessMouseScroll(static_cast<float>(yoffset));
+}
+
+void changeCameraMode(GLFWwindow* window) {
+	if (camera_mode == GLFW_CURSOR_DISABLED) camera_mode = GLFW_CURSOR_NORMAL;
+	else camera_mode = GLFW_CURSOR_DISABLED;
+
+	if (camera_mode == GLFW_CURSOR_NORMAL) {
+		camera.MouseSensitivity = 0.0f;
+	} else {
+		camera.MouseSensitivity = 0.1f;
+	}
+	glfwSetInputMode(window, GLFW_CURSOR, camera_mode);
 }
 
 

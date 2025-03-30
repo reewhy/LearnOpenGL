@@ -14,6 +14,10 @@ set(GLFW_LIB_DIR "../libs/glfw/lib-mingw-w64")
 include_directories(${GLFW_INCLUDE_DIR})
 link_directories(${GLFW_LIB_DIR})
 
+# ImGui paths
+set(IMGUI_DIR "../libs/imgui")
+include_directories(${IMGUI_DIR})
+
 # Add GLM
 find_package(glm CONFIG REQUIRED)
 
@@ -25,6 +29,13 @@ target_include_directories(glad PUBLIC "../libs/glad/include")
 add_executable(LearnOpenGL main.cpp
         ../common/Texture.h
         ../common/Camera.h
+        ../libs/imgui/imgui.cpp
+        ../libs/imgui/imgui_draw.cpp
+        ../libs/imgui/imgui_tables.cpp
+        ../libs/imgui/imgui_widgets.cpp
+        ../libs/imgui/imgui_impl_glfw.cpp
+        ../libs/imgui/imgui_impl_opengl3.cpp
+        ../libs/imgui/imgui_demo.cpp
 )
 
 # Link libraries

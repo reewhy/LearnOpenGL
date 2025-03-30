@@ -59,9 +59,13 @@ glm::vec3 toyColor(1.0f, 0.5f, 0.31f);
 // Light color
 glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 // Specularity strength
-float specStrength = 0.5f;
+glm::vec3 specStrength(0.5f, 0.5f, 0.5f);
 // Object shininess
 int shiny = 32;
+// Ambient light strength
+glm::vec3 ambient(1.0f, 0.5f, 0.31f);
+// Diffuse
+glm::vec3 diffuse(1.0f, 0.5f, 0.31f);
 
 // Timing
 float deltaTime = 0.0f; // Time between current and last frame
@@ -196,11 +200,16 @@ int main() {
 		//	Activate program
 		lightingShader.use();
 		lightingShader.setVec3("objectColor", toyColor);
-		lightingShader.setVec3("lightColor", lightColor);
-		lightingShader.setVec3("lightPos", lightPos);
+		lightingShader.setVec3("light.color", lightColor);
+		lightingShader.setVec3("light.position", lightPos);
 		lightingShader.setVec3("viewPos", camera.Position);
-		lightingShader.setFloat("specularStrength", specStrength);
-		lightingShader.setInt("shininess", shiny);
+		lightingShader.setVec3("material.specular", specStrength);
+		lightingShader.setFloat("material.shininess", shiny);
+		lightingShader.setVec3("material.ambient", ambient);
+		lightingShader.setVec3("material.diffuse", diffuse);
+		lightingShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
+		lightingShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
+		lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 		// pass projection matrix to shader (note that in this case it could change every frame)
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		lightingShader.setMat4("projection", projection);
@@ -321,8 +330,9 @@ void gui(bool *wireframe){
 	ImGui::ColorEdit3("Color", glm::value_ptr(toyColor));
 	ImGui::DragFloat3("Light Position", glm::value_ptr(lightPos), 0.1f);
 	ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));
-	ImGui::DragFloat("Specularity", &specStrength, 0.1f, 0.0f, 1.0f);
+	ImGui::DragFloat3("Specularity", glm::value_ptr(specStrength), 0.01f, 0.0f, 1.0f);
 	ImGui::DragInt("Shininess", &shiny, 1, 1, 256);
+	ImGui::DragFloat3("Ambient", glm::value_ptr(ambient), 0.01f, 0.0f, 1.0f);
 
 	ImGui::End();
 }

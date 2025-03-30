@@ -63,11 +63,13 @@ glm::vec3 specStrength(0.5f, 0.5f, 0.5f);
 // Object shininess
 int shiny = 32;
 // Ambient light strength
-glm::vec3 ambient(1.0f, 0.5f, 0.31f);
+glm::vec3 ambient(0.5f, 0.5f, 0.5f);
 // Diffuse
-glm::vec3 diffuse(1.0f, 0.5f, 0.31f);
+glm::vec3 diffuse(0.4f, 0.4f, 0.4f);
 // Plain color or texture
 bool tex = false;
+// Light direction
+glm::vec3 lightDir(-0.2f, -1.0f, -0.3f);
 
 // Timing
 float deltaTime = 0.0f; // Time between current and last frame
@@ -183,6 +185,14 @@ int main() {
 	Texture texture("../textures/container2.png", GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, true);
 	Texture specularMap("../textures/container2_specular.png", GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR, true);
 
+	lightingShader.use();
+	lightingShader.setInt("material.diffuse", 0);
+	lightingShader.setInt("material.specular", 1);
+	lightingShader.setFloat("light.constant", 1.0f);
+	lightingShader.setFloat("light.linear", 0.09f);
+	lightingShader.setFloat("light.quadratic", 0.032f);
+
+
 	// Render loop
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
@@ -207,18 +217,23 @@ int main() {
 
 		//	Activate program
 		lightingShader.use();
-		lightingShader.setVec3("light.position", lightPos);
 		lightingShader.setVec3("viewPos", camera.Position);
-		lightingShader.setVec3("light.color", lightColor);
 		lightingShader.setFloat("material.shininess", shiny);
-		lightingShader.setVec3("material.ambient", ambient);
-		lightingShader.setInt("material.diffuse", 0);
-		lightingShader.setVec3("light.ambient", 0.2f, 0.2f, 0.2f);
-		lightingShader.setVec3("light.diffuse", 0.5f, 0.5f, 0.5f);
-		texture.use(GL_TEXTURE0);
-		lightingShader.setInt("material.specular", 1);
-		specularMap.use(GL_TEXTURE1);
-		lightingShader.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+
+		// Directional light
+		lightingShader.setVec3("dirLight.direction", lightDir);
+		lightingShader.setVec3("dirLight.ambient", ambient);
+		lightingShader.setVec3("dirLight.diffuse", diffuse);
+		lightingShader.setVec3("dirLight.specular",specStrength);
+		// Point Light
+		lightingShader.setVec3("pointLights[0].position", lightPos);
+		lightingShader.setVec3("pointLights[0].ambient", ambient);
+		lightingShader.setVec3("pointLights[0].diffuse", diffuse);
+		lightingShader.setVec3("pointLights[0].specular", specStrength);
+		lightingShader.setFloat("pointLights[0].constant", 1.0f);
+		lightingShader.setFloat("pointLights[0].linear", 0.09f);
+		lightingShader.setFloat("pointLights[0].quadratic", 0.032f);
+
 		// pass projection matrix to shader (note that in this case it could change every frame)
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		lightingShader.setMat4("projection", projection);
@@ -228,11 +243,25 @@ int main() {
 		lightingShader.setMat4("view", view);
 		// Set the shader projection
 		lightingShader.setMat4("projection", projection);
-        glm::mat4 model = glm::mat4(1.0f);
-		lightingShader.setMat4("model", model);
+
+		texture.use(GL_TEXTURE0);
+		specularMap.use(GL_TEXTURE1);
 
 
 		glBindVertexArray(cubeVAO);
+		for (unsigned int i = 0; i < 10; i++) {
+			glm::mat4 model = glm::mat4(1.0f);
+			model = glm::translate(model, cubePositions[i]);
+			float angle = 20.0f * i;
+			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+			lightingShader.setMat4("model", model);
+
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+		}
+
+        glm::mat4 model = glm::mat4(1.0f);
+
+
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		lightCubeShader.use();
@@ -342,6 +371,7 @@ void gui(bool *wireframe){
 	ImGui::DragFloat3("Specularity", glm::value_ptr(specStrength), 0.01f, 0.0f, 1.0f);
 	ImGui::DragInt("Shininess", &shiny, 1, 1, 256);
 	ImGui::DragFloat3("Ambient", glm::value_ptr(ambient), 0.01f, 0.0f, 1.0f);
+	ImGui::DragFloat3("Light direction", glm::value_ptr(lightDir), 0.1f);
 
 	ImGui::End();
 }

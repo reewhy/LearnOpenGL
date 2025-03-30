@@ -29,6 +29,9 @@ const unsigned int SCR_HEIGHT = 600;
 int mode = GL_FILL;
 int camera_mode = GLFW_CURSOR_DISABLED;
 
+// Top-down
+GLFWwindow* init();
+void drawCube(Shader ourShader, glm::vec3 position, float angle, bool rotate);
 // Callback for handling window resizing
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 // Change rendering mode
@@ -40,6 +43,7 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow* window);
 // Gui
+void initGui(GLFWwindow* window);
 void gui(bool *wireframe);
 
 // Camera settings
@@ -54,49 +58,12 @@ float lastFrame = 0.0f;
 
 int main() {
 	bool wireframe = false;
-	// Initilize
-	glfwInit();
-	// Window configuration options
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+	// Init window
+	GLFWwindow* window = init();
 
-
-	// Creating a window object
-	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
-	// Checking if the object was created
-	if (window == NULL) {
-		std::cout << "Failed to create GLFW window" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-	// Making the window the main context of the current thread
-	glfwMakeContextCurrent(window);
-	// Setting window resize callback function
-	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
-	// Setting input handling
-	glfwSetKeyCallback(window, process_input_callback);
-	glfwSetScrollCallback(window, scroll_callback);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetCursorPosCallback(window, mouse_callback);
-
-	// Initialize GLAD
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-		std::cout << "Failed to initialize GLAD" << std::endl;
-		return -1;
-	}
-
-	// ImGui configuration
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	ImGui::StyleColorsDark();
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-#ifdef __EMSCRIPTEN__
-	ImGui_ImplGlfw_InstallEmscriptenCallbacks(window, "#canvas");
-#endif
-	ImGui_ImplOpenGL3_Init("#version 330");
-
+	if (window == nullptr) return -1;
+	// Init ImGui
+	initGui(window);
 
 	// Yes
 	glEnable(GL_DEPTH_TEST);
@@ -200,6 +167,7 @@ int main() {
 	// Render loop
 	while (!glfwWindowShouldClose(window)) {
 		glfwPollEvents();
+
 		// Calculate deltaTime
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
@@ -212,14 +180,11 @@ int main() {
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-
+		// Generate UI
 		gui(&wireframe);
 
-
-		// Rendering
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 
 		// Use the texture
 		texture1.use(GL_TEXTURE0);
@@ -241,33 +206,20 @@ int main() {
 		// Draw all the cubes
 		for(unsigned int i = 0; i < 10; i++)
 		{
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, cubePositions[i]);
+			bool rotate = false;
+			if (i % 3 == 0 || i == 0) rotate = true;
 			float angle = 20.0f * i;
-			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			if ( i % 3 == 0 || i == 0) {
-				model = glm::rotate(model, (float)glfwGetTime() * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			}
-			ourShader.setMat4("model", model);
-
-			glDrawArrays(GL_TRIANGLES, 0, 36);
+			drawCube(ourShader, cubePositions[i], angle, rotate);
 		}
+
 		glBindVertexArray(VAO);
-		// glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		//  DRAW THE FUCKING TRIANGLE(s)
-		// Check and call  events and swap the buffers
 
-		// Create the UI elements
+		// Render the GUI
 		ImGui::Render();
-
-
 		// Render the data
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 
 		glfwSwapBuffers(window);
-
-
-
 	}
 	// Clean GLFW's resources
 	glDeleteVertexArrays(1, &VAO);
@@ -279,6 +231,71 @@ int main() {
 	return 0;
 }
 
+// Function to draw cubes
+void drawCube(Shader ourShader, glm::vec3 position, float angle, bool rotate) {
+	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::translate(model, position);
+	model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+	if ( rotate) {
+		model = glm::rotate(model, (float)glfwGetTime() * glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+	}
+	ourShader.setMat4("model", model);
+
+	glDrawArrays(GL_TRIANGLES, 0, 36);
+}
+
+// Initialize GUI
+void initGui(GLFWwindow *window) {
+	// ImGui configuration
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+#ifdef __EMSCRIPTEN__
+	ImGui_ImplGlfw_InstallEmscriptenCallbacks(window, "#canvas");
+#endif
+	ImGui_ImplOpenGL3_Init("#version 330");
+}
+
+// Initialize GLFW
+GLFWwindow* init() {
+	// Initilize
+	glfwInit();
+	// Window configuration options
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+
+	// Creating a window object
+	GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
+	// Checking if the object was created
+	if (window == NULL) {
+		std::cout << "Failed to create GLFW window" << std::endl;
+		glfwTerminate();
+		return nullptr;
+	}
+	// Making the window the main context of the current thread
+	glfwMakeContextCurrent(window);
+	// Setting window resize callback function
+	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	// Setting input handling
+	glfwSetKeyCallback(window, process_input_callback);
+	glfwSetScrollCallback(window, scroll_callback);
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetCursorPosCallback(window, mouse_callback);
+
+	// Initialize GLAD
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+		std::cout << "Failed to initialize GLAD" << std::endl;
+		return nullptr;
+	}
+
+	return window;
+}
+
+// GUI Configs
 void gui(bool *wireframe){
 	ImGui::Begin("Settings");
 
@@ -358,12 +375,3 @@ void changeCameraMode(GLFWwindow* window) {
 	}
 	glfwSetInputMode(window, GLFW_CURSOR, camera_mode);
 }
-
-
-
-
-
-
-
-
-

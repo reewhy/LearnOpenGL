@@ -25,5 +25,13 @@ https://github.com/user-attachments/assets/37af6d51-7454-4816-81ff-41d0c22121a7
 
 
 
-Uploading Registrazione dello schermo 2025-03-30 184155.mp4…
+
+
+https://github.com/user-attachments/assets/db39429b-78dd-483c-99ee-a198a015ad31
+
+
+
+
+
+https://github.com/user-attachments/assets/7e1efc01-120f-46f9-9b75-4ab613dacde1
 

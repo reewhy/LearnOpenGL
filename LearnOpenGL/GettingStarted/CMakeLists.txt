@@ -8,8 +8,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 find_package(OpenGL REQUIRED)
 
 # GLFW paths (Adjust based on your system)
-set(GLFW_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/libs/glfw/include")
-set(GLFW_LIB_DIR "${PROJECT_SOURCE_DIR}/libs/glfw/lib-mingw-w64")
+set(GLFW_INCLUDE_DIR "../libs/glfw/include")
+set(GLFW_LIB_DIR "../libs/glfw/lib-mingw-w64")
 
 include_directories(${GLFW_INCLUDE_DIR})
 link_directories(${GLFW_LIB_DIR})
@@ -18,13 +18,13 @@ link_directories(${GLFW_LIB_DIR})
 find_package(glm CONFIG REQUIRED)
 
 # Add GLAD
-add_library(glad "${PROJECT_SOURCE_DIR}/libs/glad/src/glad.c")
-target_include_directories(glad PUBLIC "${PROJECT_SOURCE_DIR}/libs/glad/include")
+add_library(glad "../libs/glad/src/glad.c")
+target_include_directories(glad PUBLIC "../libs/glad/include")
 
 # Add the executable
-add_executable(LearnOpenGL main.cpp Shader.cpp
-        Texture.h
-        Camera.h
+add_executable(LearnOpenGL main.cpp
+        ../common/Texture.h
+        ../common/Camera.h
 )
 
 # Link libraries

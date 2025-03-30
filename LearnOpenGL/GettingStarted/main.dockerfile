@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/windows/servercore:ltsc2022
 
 WORKDIR C:\app
 
-COPY . .
+COPY .. .
 
 # Install dependencies (adjust as needed)
 RUN powershell -Command "choco install -y visualstudio2022buildtools"

@@ -4,20 +4,20 @@
 #include <GLFW/glfw3.h>
 #include <iostream>
 // Class for easy shader loading
-#include "Shader.h"
+#include "../common/Shader.h"
 #include <filesystem>
 // Class for image loading
 #define STB_IMAGE_IMPLEMENTATION
-#include "libs/stb_image.h"
+#include "../libs/stb_image.h"
 // Class for easy texture loading
-#include "Texture.h"
+#include "../common/Texture.h"
 
 // math library
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#include "Camera.h"
+#include "../common/Camera.h"
 
 // Window size
 const unsigned int SCR_WIDTH = 800;

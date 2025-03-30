@@ -209,6 +209,7 @@ int main() {
 		lightingShader.use();
 		lightingShader.setVec3("light.position", lightPos);
 		lightingShader.setVec3("viewPos", camera.Position);
+		lightingShader.setVec3("light.color", lightColor);
 		lightingShader.setFloat("material.shininess", shiny);
 		lightingShader.setVec3("material.ambient", ambient);
 		lightingShader.setInt("material.diffuse", 0);

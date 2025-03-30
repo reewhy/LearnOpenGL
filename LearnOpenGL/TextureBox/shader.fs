@@ -13,6 +13,8 @@ struct Light {
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
+
+    vec3 color;
 };
 
 uniform Light light;
@@ -26,7 +28,7 @@ in vec2 TexCoords;
 void main()
 {
     // Ambient light
-    vec3 ambient = light.ambient * texture(material.diffuse, TexCoords).rgb;
+    vec3 ambient = light.ambient * texture(material.diffuse, TexCoords).rgb * light.color;
 
     // Light direction
     vec3 norm = normalize(normal);
@@ -34,7 +36,7 @@ void main()
 
     // Diffuse light
     float diff = max(dot(norm, lightDir), 0.0);
-    vec3 diffuse = light.diffuse * diff * texture(material.diffuse, TexCoords).rgb;
+    vec3 diffuse = light.diffuse * diff * texture(material.diffuse, TexCoords).rgb * light.color;
 
     // View and reflect directions
     vec3 viewDir = normalize(viewPos - FragPos);

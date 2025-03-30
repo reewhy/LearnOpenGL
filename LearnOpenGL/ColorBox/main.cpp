@@ -66,6 +66,8 @@ int shiny = 32;
 glm::vec3 ambient(1.0f, 0.5f, 0.31f);
 // Diffuse
 glm::vec3 diffuse(1.0f, 0.5f, 0.31f);
+// Plain color or texture
+bool tex = false;
 
 // Timing
 float deltaTime = 0.0f; // Time between current and last frame

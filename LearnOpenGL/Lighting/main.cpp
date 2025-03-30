@@ -22,8 +22,8 @@
 #include "../libs/imgui/imgui_impl_glfw.h"
 #include "../libs/imgui/imgui_impl_opengl3.h"
 // Window size
-const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_WIDTH = 1100;
+const unsigned int SCR_HEIGHT = 800;
 
 // Rendering mode
 int mode = GL_FILL;
@@ -54,8 +54,14 @@ bool firstMouse = true;
 
 // Light source
 glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
-// Light color
+// Cube color
 glm::vec3 toyColor(1.0f, 0.5f, 0.31f);
+// Light color
+glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+// Specularity strength
+float specStrength = 0.5f;
+// Object shininess
+int shiny = 32;
 
 // Timing
 float deltaTime = 0.0f; // Time between current and last frame
@@ -184,14 +190,17 @@ int main() {
 		// Generate UI
 		gui(&wireframe);
 
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		//	Activate program
 		lightingShader.use();
 		lightingShader.setVec3("objectColor", toyColor);
-		lightingShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+		lightingShader.setVec3("lightColor", lightColor);
 		lightingShader.setVec3("lightPos", lightPos);
+		lightingShader.setVec3("viewPos", camera.Position);
+		lightingShader.setFloat("specularStrength", specStrength);
+		lightingShader.setInt("shininess", shiny);
 		// pass projection matrix to shader (note that in this case it could change every frame)
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 		lightingShader.setMat4("projection", projection);
@@ -216,6 +225,7 @@ int main() {
 		model = glm::scale(model, glm::vec3(0.2f));
 
 		lightCubeShader.setMat4("model", model);
+		lightCubeShader.setVec3("lightColor", lightColor);
 
 		glBindVertexArray(lightCubeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -310,6 +320,9 @@ void gui(bool *wireframe){
 	}
 	ImGui::ColorEdit3("Color", glm::value_ptr(toyColor));
 	ImGui::DragFloat3("Light Position", glm::value_ptr(lightPos), 0.1f);
+	ImGui::ColorEdit3("Light Color", glm::value_ptr(lightColor));
+	ImGui::DragFloat("Specularity", &specStrength, 0.1f, 0.0f, 1.0f);
+	ImGui::DragInt("Shininess", &shiny, 1, 1, 256);
 
 	ImGui::End();
 }
